@@ -1,0 +1,51 @@
+import Firebase
+
+protocol FirebaseAnalyticManagerAvailable {
+    var firebaseAnalyticManager: FirebaseAnalyticManager? {get}
+}
+extension FirebaseAnalyticManagerAvailable {
+    var firebaseAnalyticManager: FirebaseAnalyticManager? {
+        guard let _appDelegate = UIApplication.shared.delegate as? AppDelegate else {return nil}
+        return _appDelegate.firebaseAnalyticManager
+    }
+}
+public protocol FirebaseManagerProtocol {
+    func removeSharedFirebase(completed:@escaping () -> ())
+    func logEvent(with event : FirebaseEvents)
+    func setScreen(with screen: FirebaseScreens)
+}
+public enum FirebaseScreens: String {
+    case testScreen = "Test_Screen"
+}
+public enum FirebaseEvents :String {
+    case testEvent = "Test_Event"
+}
+class FirebaseAnalyticManager : FirebaseManagerProtocol {
+    var activeFirebaseApps: [String:FirebaseApp] {
+        get {
+            return FirebaseApp.allApps ?? [:]
+        }
+    }
+    
+    init?() {
+        FirebaseApp.configure()
+        Analytics.setAnalyticsCollectionEnabled(true)
+        if FirebaseApp.app() == nil {
+            return nil
+        }
+    }
+    
+    func removeSharedFirebase(completed:@escaping () -> ()) {
+        FirebaseApp.app()?.delete({ (removed) in
+            completed()
+        })
+    }
+    
+    func logEvent(with event :FirebaseEvents) {
+        Analytics.logEvent(event.rawValue, parameters: [:])
+    }
+    
+    func setScreen(with screen: FirebaseScreens) {
+        Analytics.setScreenName(screen.rawValue, screenClass: screen.rawValue)
+    }
+}
